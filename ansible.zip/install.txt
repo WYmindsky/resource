@@ -1,0 +1,517 @@
+puppet    基于ruby开发，C/S架构，支持多平台，社区免费，企业收费（支持图形化配置）。。
+
+saltstack  基于python开发，c/s架构，支持多平台，轻量级，命令快捷，配置容易。   效率更高
+
+Ansible    基于python开发， 不是C/S架构，单机。 配置完配置文件，远程即可。    轻量级
+
+
+此软件配置参考http://my.oschina.net/u/190049/blog/516634
+http://os.51cto.com/art/201409/451927_all.htm
+
+ansible安装
+被管理的服务器（Managed Node）需要安装Python2.4以上的版本，如果低于2.5，需要安装python-simplejson。
+
+1、Ansible基础安装
+源码包安装：这里都用wget获取资源wget --no-check-certificate https
+直接yum安装：
+yum install -y epel-release
+yum install -y ansible libselinux-pathon
+
+(1)、python2.7安装
+
+wget --no-check-certificate https://www.python.org/ftp/python/2.7.8/Python-2.7.8.tgz
+
+# tar xvzf Python-2.7.8.tgz
+
+# cd Python-2.7.8
+
+# ./configure --prefix=/usr/local
+
+# make --jobs=`grep processor /proc/cpuinfo | wc -l`
+
+# make install
+
+
+
+## 将python头文件拷贝到标准目录，以避免编译ansible时，找不到所需的头文件
+
+# cd /usr/local/include/python2.7
+
+# cp -a ./* /usr/local/include/
+
+
+
+## 备份旧版本的python，并符号链接新版本的python
+
+# cd /usr/bin
+
+# mv python python2.7
+
+# ln -s /usr/local/bin/python
+
+
+
+## 修改yum脚本，使其指向旧版本的python，已避免其无法运行
+
+# vim /usr/bin/yum
+
+#!/usr/bin/python  -->  #!/usr/bin/python2.7
+
+
+
+(2)、setuptools模块安装
+
+wget --no-check-certificate https://pypi.python.org/packages/source/s/setuptools/setuptools-7.0.tar.gz
+
+# tar xvzf setuptools-7.0.tar.gz
+
+# cd setuptools-7.0
+
+# python setup.py install
+
+RuntimeError: Compression requires the (missing) zlib module
+yum install -y zlib zlib-devel
+
+
+(3)、pycrypto模块安装
+
+wget --no-check-certificate https://pypi.python.org/packages/source/p/pycrypto/pycrypto-2.6.1.tar.gz
+
+# tar xvzf pycrypto-2.6.1.tar.gz
+
+# cd pycrypto-2.6.1
+
+# python setup.py install
+
+
+
+(4)、PyYAML模块安装
+
+http://pyyaml.org/download/libyaml/yaml-0.1.5.tar.gz
+
+# tar xvzf yaml-0.1.5.tar.gz
+
+# cd yaml-0.1.5
+
+# ./configure --prefix=/usr/local
+
+# make --jobs=`grep processor /proc/cpuinfo | wc -l`
+
+# make install
+
+
+
+wget --no-check-certificate https://pypi.python.org/packages/source/P/PyYAML/PyYAML-3.11.tar.gz
+
+# tar xvzf PyYAML-3.11.tar.gz
+
+# cd PyYAML-3.11
+
+# python setup.py install
+
+
+
+(5)、Jinja2模块安装
+
+wget --no-check-certificate https://pypi.python.org/packages/source/M/MarkupSafe/MarkupSafe-0.9.3.tar.gz
+
+# tar xvzf MarkupSafe-0.9.3.tar.gz
+
+# cd MarkupSafe-0.9.3
+
+# python setup.py install
+
+
+
+wget --no-check-certificate https://pypi.python.org/packages/source/J/Jinja2/Jinja2-2.7.3.tar.gz
+
+# tar xvzf Jinja2-2.7.3.tar.gz
+
+# cd Jinja2-2.7.3
+
+# python setup.py install
+
+
+
+(6)、paramiko模块安装
+
+wget --no-check-certificate https://pypi.python.org/packages/source/e/ecdsa/ecdsa-0.11.tar.gz
+
+# tar xvzf ecdsa-0.11.tar.gz
+
+# cd ecdsa-0.11
+
+# python setup.py install
+
+
+
+wget --no-check-certificate https://pypi.python.org/packages/source/p/paramiko/paramiko-1.15.1.tar.gz
+
+# tar xvzf paramiko-1.15.1.tar.gz
+
+# cd paramiko-1.15.1
+
+# python setup.py install
+
+
+
+(7)、simplejson模块安装
+
+wget --no-check-certificate https://pypi.python.org/packages/source/s/simplejson/simplejson-3.6.5.tar.gz
+
+# tar xvzf simplejson-3.6.5.tar.gz
+
+# cd simplejson-3.6.5
+
+# python setup.py install
+
+
+
+(8)、ansible安装
+
+wget --no-check-certificate https://github.com/ansible/ansible/archive/v1.7.2.tar.gz
+
+# tar xvzf ansible-1.7.2.tar.gz
+
+# cd ansible-1.7.2
+
+# python setup.py install
+
+2、Ansible配置
+(1)、SSH免密钥登录设置
+## 生成公钥/私钥
+# ssh-keygen -t rsa -P ''
+
+
+
+## 写入信任文件（将/root/.ssh/id_rsa_storm1.pub分发到其他服务器，并在所有服务器上执行如下指令）：
+
+# cat /root/.ssh/id_rsa_storm1.pub >> /root/.ssh/authorized_keys
+# chmod 600 /root/.ssh/authorized_keys
+(2)、ansible配置
+# mkdir -p /etc/ansible
+# vim /etc/ansible/ansible.cfg
+[defaults]
+hostfile       = /etc/ansible/hosts
+library        = /usr/share/ansible
+remote_tmp     = $HOME/.ansible/tmp
+pattern        = *
+forks          = 5
+poll_interval  = 15
+sudo_user      = root
+transport      = smart
+remote_port    = 22
+module_lang    = C
+gathering = implicit
+sudo_exe = sudo
+timeout = 10
+log_path = /var/log/ansible.log
+private_key_file = /root/.ssh/id_rsa_storm1
+ansible_managed = Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}
+action_plugins     = /usr/share/ansible_plugins/action_plugins
+callback_plugins   = /usr/share/ansible_plugins/callback_plugins
+connection_plugins = /usr/share/ansible_plugins/connection_plugins
+lookup_plugins     = /usr/share/ansible_plugins/lookup_plugins
+vars_plugins       = /usr/share/ansible_plugins/vars_plugins
+filter_plugins     = /usr/share/ansible_plugins/filter_plugins
+[paramiko_connection]
+[ssh_connection]
+[accelerate]
+accelerate_port = 5099
+accelerate_timeout = 30
+accelerate_connect_timeout = 5.0
+accelerate_daemon_timeout = 30
+
+## 主机组定义
+# vim /etc/ansible/hosts
+[storm_cluster]
+10.223.55.100     ansible_ssh_user=root ansible_ssh_pass=343434
+10.223.55.101
+10.223.38.226
+10.223.38.227
+10.223.39.216
+10.223.25.123
+
+
+ansible ~192.168.30.20 -m command -a  'uptime'
+表示只显示192.168.30.20这台机器的uptime
+ansible all -m command -a 'uptime'
+显示/etc/ansible/hosts里所有的主机信息
+(3)、命令集合
+默认ansible并发是5，想要并发的话要加参数-f 10
+
+copy模块和rsync是一样的，如果两边的文件内容是一样的话是不会同步的，handlers是只有上面的tasks执行成功后才执行的，不然不执行
+
+ansible 192.168.1.1 -m shell -a 'chdir=/tmp/test.txt touch test2.file'
+ansible ~192.168.30.20 -m copy -a "src=/test/b dest=/tmp/b"
+ansible all -m file -a "dest=/tmp/b mode=755 owner=test group=test"
+ansible 192.168.30.20 -m cron -a 'name="custom job" minute=*/2 hour=* day=1 month=* weekday=7 job="/usr/sbin/ntpdate time.windows.com"'
+ansible 192.168.30.40 -m group -a 'gid=2014 name=nolinux'    创建组
+ansible 192.168.30.20 -m user -a 'name=zhangsan groups=nolinux state=present'          -----删除用户state=absent remove=yes
+ansible all -m yum -a 'name=httpd state=present'
+ansible all -m service -a 'name=httpd state=restarted enabled=yes' -----start stopped restarted   开机自启动enabled
+ansible all -m script  -a '/test/a.sh'
+ansible all -m ping
+ansible all -m command -a 'hostname'
+ansible all -m raw -a 'hostname|tee'
+ansible all -m get_url -a 'url=http://10.10.10.10/favicon.ico dest=/tmp'
+ansible all -m synchronnize -a 'src=/test/b dest=/tmp/ compress=yes'    
+----delete=yes 使两边一样和rsync一样  
+--exclude=.git  忽略同步.git结尾的文件
+mode=pull  从对方拉取过来
+# ansible storm_cluster -m command -a 'uptime'                       storm_cluster 就是/etc/ansible/hosts里定义的[storm_cluster]
+
+
+说明：第一次运行时，需要输入一下“yes”【进行公钥验证】，后续无需再次输入。
+两步实现密钥登陆(无法实现，只能是先scp公钥到目的机器 然后ssh,每台机器都得做)
+scp /root/.ssh/id_rsa.pub 192.168.30.31:/root/.ssh/
+ssh 192.168.30.31 "cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys"
+ssh 192.168.30.31 "chmod 600 /root/.ssh/authorized_keys"
+
+ansible all -m copy -a "src=/root/.ssh/id_rsa.pub dest=/root"
+ansible all -m shell -a "cat /root/id_rsa.pub >> /root/.slsh/authenticated.key"
+## 再次运行
+# ansible storm_cluster -m command -a 'uptime'
+
+
+3、常用模块使用
+(1)、setup
+## 用来查看远程主机的一些基本信息
+# ansible storm_cluster -m setup
+
+
+
+(2)、ping
+## 用来测试远程主机的运行状态
+# ansible storm_cluster -m ping
+
+
+
+(3)、file
+## 设置文件的属性
+相关选项如下：
+force：需要在两种情况下强制创建软链接，一种是源文件不存在，但之后会建立的情况下；另一种是目标软链接已存在，需要先取消之前的软链，然后创建新的软链，有两个选项：yes|no
+group：定义文件/目录的属组
+mode：定义文件/目录的权限
+owner：定义文件/目录的属主
+path：必选项，定义文件/目录的路径
+recurse：递归设置文件的属性，只对目录有效
+src：被链接的源文件路径，只应用于state=link的情况
+dest：被链接到的路径，只应用于state=link的情况
+state：
+       directory：如果目录不存在，就创建目录
+       file：即使文件不存在，也不会被创建
+       link：创建软链接
+       hard：创建硬链接
+       touch：如果文件不存在，则会创建一个新的文件，如果文件或目录已存在，则更新其最后修改时间
+       absent：删除目录、文件或者取消链接文件
+
+
+示例：
+## 远程文件符号链接创建
+# ansible storm_cluster -m file -a "src=/etc/resolv.conf dest=/tmp/resolv.conf state=link"
+
+
+
+## 远程文件信息查看
+# ansible storm_cluster -m command -a "ls –al /tmp/resolv.conf"
+
+
+
+## 远程文件符号链接删除
+# ansible storm_cluster -m file -a "path=/tmp/resolv.conf state=absent"
+
+
+
+## 远程文件信息查看
+# ansible storm_cluster -m command -a "ls -al /tmp/resolv.conf"
+
+说明：如上显示，代表文件或链接已经删除。
+
+
+(4)、copy
+## 复制文件到远程主机
+相关选项如下：
+backup：在覆盖之前，将源文件备份，备份文件包含时间信息。有两个选项：yes|no
+content：用于替代“src”，可以直接设定指定文件的值
+dest：必选项。要将源文件复制到的远程主机的绝对路径，如果源文件是一个目录，那么该路径也必须是个目录
+directory_mode：递归设定目录的权限，默认为系统默认权限
+force：如果目标主机包含该文件，但内容不同，如果设置为yes，则强制覆盖，如果为no，则只有当目标主机的目标位置不存在该文件时，才复制。默认为yes
+others：所有的file模块里的选项都可以在这里使用
+src：被复制到远程主机的本地文件，可以是绝对路径，也可以是相对路径。如果路径是一个目录，它将递归复制。在这种情况下，如果路径使用“/”来结尾，则只复制目录里的内容，如果没有使用“/”来结尾，则包含目录在内的整个内容全部复制，类似于rsync。
+
+
+示例：
+## 将本地文件“/etc/ansible/ansible.cfg”复制到远程服务器
+# ansible storm_cluster -m copy -a "src=/etc/ansible/ansible.cfg dest=/tmp/ansible.cfg owner=root group=root mode=0644"
+
+
+
+## 远程文件信息查看
+# ansible storm_cluster -m command -a "ls -al /tmp/ansible.cfg"
+
+
+
+(5)、command
+## 在远程主机上执行命令
+相关选项如下：
+creates：一个文件名，当该文件存在，则该命令不执行
+free_form：要执行的linux指令
+chdir：在执行指令之前，先切换到该目录
+removes：一个文件名，当该文件不存在，则该选项不执行
+executable：切换shell来执行指令，该执行路径必须是一个绝对路径
+
+
+示例：
+# ansible storm_cluster -m command -a "uptime"
+
+
+
+(6)、shell
+## 切换到某个shell执行指定的指令，参数与command相同。
+与command不同的是，此模块可以支持命令管道，同时还有另一个模块也具备此功能：raw
+
+
+示例：
+## 先在本地创建一个SHELL脚本
+# vim /tmp/rocketzhang_test.sh
+#!/bin/sh
+date +%F_%H:%M:%S
+
+
+#chmod +x /tmp/rocketzhang_test.sh
+
+
+## 将创建的脚本文件分发到远程
+# ansible storm_cluster -m copy -a "src=/tmp/rocketzhang_test.sh dest=/tmp/rocketzhang_test.sh owner=root group=root mode=0755"
+
+
+## 远程执行
+# ansible storm_cluster -m shell -a "/tmp/rocketzhang_test.sh"
+
+
+
+(7)、更多模块
+其他常用模块，比如：service、cron、yum、synchronize就不一一例举，可以结合自身的系统环境进行测试。
+
+service：系统服务管理
+ansible all -m service -a 'name=httpd state=started/stopped/restarted enable=true'
+
+cron：计划任务管理
+ansible all -m cron -a "name=test job='/bin/touch /tmp/123.txt' minute='1,5,10' hour='*/5' month='1-2' day='1-10' weekday=6"
+ansible all -m cron -a "name=test state=absent"     去掉
+yum：yum软件包安装管理
+ansible all -m yum -a 'name=httpd state=present'
+synchronize：使用rsync同步文件
+user：系统用户管理
+group：系统用户组管理
+
+更多模块可以参考：
+#ansible-doc –l
+#ansible-doc -s 模块名                查看模块的使用参数
+
+
+
+http://docs.ansible.com/modules_by_category.html
+http://www.ansible.cn/docs/
+(国内的一个镜像站点，避免被墙 ^_^ )
+(8)、一些概念补充
+playbook的组成：playbook是由一个或多个“play”组成的列表，可以让它们联同起来按事先编排的机制执行；所谓task无非是调用ansible的一个module，而在模块参数中可以使用变量；模块执行是幂等的，这意味着多次执行是安全的，因为其结果均一致；
+
+
+执行模型：task list中的各任务按次序逐个在hosts中指定的所有主机上执行，即在所有主机上完成第一个任务后再开始第二个。在顺序运行某playbook时，如果中途发生错误，所有已执行任务都将回滚，因此，在修改playbook后重新执行一次即可；
+
+
+task组成：每个task都应该有其name，用于playbook的执行结果输出，建议其内容尽可能清晰地描述任务执行步骤。如果未提供name，则action的结果将用于输出；
+
+notify指定handler的执行机制：“notify”这个action可用于在每个play的最后被触发，在notify中列出的操作称为handler，仅在所有的变化发生完成后一次性地执行指定操作。上面的tasks执行不成功是不会执行这个handlers的
+
+playbook
+把这些配置都放到一个配置文件中，直接执行文件
+cd /etc/ansible
+vim test.yml
+- - -                         固定格式
+- hosts: cluster_storm       主机
+   remote_user: root
+   tasks:
+       - name: test_playbook
+          shell: touch /tmp/1.txt
+
+执行playbook     ansible-playbook test.yml
+
+
+- - -
+- name: create_user
+   hosts: cluster_storm
+   user: root
+   gather_facts: false
+   vars:
+       - user: "test"
+    tasks:
+        - name: create user
+           user: name="{{ user }}"
+
+
+循环
+---
+- hosts: testhosts
+  user: root
+  tasks:
+   - name: change mod for file
+     file: path=/tmp/{{ item }} mode=600 owner=root group=root
+     with_items:
+      - 1.txt
+      - 2.txt
+      - 3.txt
+
+
+
+判断语句
+- - -
+- hosts:cluster_storm
+   user: root
+   gather_facts: True
+   tasks:
+     - name: use when
+        shell: touch /tmp/when.txt
+        when: facter_ipaddress == "192.168.30.20"
+        #when:ansible.eth0.ipv4.sipaddress == "192.168.30.20"  虚拟机里用这个
+
+handlers适用配置文件更改了需要重启服务的情况，如果文件没变是不会执行handlers的
+- - -
+-hosts: cluster_storm
+ remote_user: root
+ tasks:
+     - name: test copy
+        copy: src=/tmp/1.txt dest=/tmp/2.txt
+        notify: test handlers     调用下面定义的name
+ handlers:
+     - name: test handlers
+        shell: echo "1212" >> /tmp/2.txt
+        sudo: yes     --->>>这里如果没有权限可使用root或者sudo  
+
+- - -
+-hosts: cluster_storm
+ remote_user: root
+ tasks:
+     - name: test copy
+        copy: src={{ item.src }} dest={{ item.dest }} owner=root group=root mode=0755
+ with_items: 相当于数组
+  - { src: nginx.conf,dest: conf/nginx.conf }
+  - { src: vhosts,dest: conf }
+
+实例
+ansible安装nginx
+现在这台机器上按好nginx，打包，最后用ansible下发
+cd /etc/ansible
+mkdir nginx_install
+cd ningx_install
+mkdir -p roles/{common,install}/{handleers,files,meta,tasks,templates,vars}
+common是准备操作  依赖包安装tasks/main.yml
+install
+handlers后续操作比如重启服务
+files文件包
+tasks具体有哪些任务
+vars定义变量main.yml
+templates通常是一些配置文件，启动脚本等
+
